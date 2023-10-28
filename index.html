@@ -25,9 +25,12 @@ Konekti.uses('header','navbar', 'canvas')
 function KonektiMain(){
 	var client = new Environment()
     client.setPlayers({
-        'rand1': new RandomPlayer(),
-        'rand2': new RandomPlayer(),
-		'm' : new MinimaxPlayer(),
+        'r': new RandomPlayer(),
+		'm1' : new MinimaxPlayer(1),
+		'm2' : new MinimaxPlayer(2),
+		'm3' : new MinimaxPlayer(3),
+		'm4' : new MinimaxPlayer(4),
+		'm5' : new MinimaxPlayer(5),
     })
 
 	Konekti.header('title','', 'Reversi', 3, {'class':'w3-black w3-center'} )

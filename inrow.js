@@ -69,7 +69,7 @@ class Board{
 
     // Determines the winner of the game if available 'W': white, 'B': black, ' ': none
     winner(board, k){
-        console.log(k)
+        // console.log(k)
         var size = board.length
         for( var i=0; i<size; i++){
             for(var j=0; j<size; j++){
@@ -123,6 +123,10 @@ class Board{
     }
 }
 
+function slow_down(times){
+    for(var i=0; i<50000000*times; i++){}
+}
+
 /*
  * Player's Code (Must inherit from Agent) 
  * This is an example of a random player agent
@@ -134,143 +138,185 @@ class RandomPlayer extends Agent{
     }
 
     compute(board, time){
+        // console.log(board)
         var moves = this.board.valid_moves(board)
         var index = Math.floor(moves.length * Math.random())
-        // for(var i=0; i<50000000; i++){} // Making it very slow to test time restriction
-        // for(var i=0; i<50000000; i++){} // Making it very slow to test time restriction
-        console.log(this.color + ',' + moves[index])
+        // slow_down(2)
+        // console.log(this.color + ',' + moves[index])
         return moves[index]
     }
 }
 
 class MinimaxPlayer extends Agent {
-    constructor() {
+    constructor(maxDepth) {
         super();
         this.board = new Board();
-        this.maxDepth = 5; // You can adjust the depth according to your requirements
+        this.maxDepth = maxDepth;
     }
 
     compute(board, time) {
-        this.color = this.color || 'W'; // Set the color if not already set
-        this.maximizingPlayer = (this.color === 'W'); // True if maximizing player (AI), false if minimizing player (opponent)
+        // let valid_moves = this.board.valid_moves(board)
+        // let best_score = -Infinity;
+        // let best_move = null;
+        // let score;
 
-        // Get valid moves
-        const moves = this.board.valid_moves(board);
+        // let scores = []
+
+        // for(let col of valid_moves){
+        //     let temp_board = this.board.clone(board)
+        //     this.board.move(temp_board, col, this.color)
+        //     score = this.score_position(temp_board, this.color)
+        //     scores.push(score)
+        //     if (score > best_score) {
+        //         best_score = score;
+        //         best_move = col;
+        //     }
+        // }
+
+        // console.log(this.color, best_move, scores)
+
+        // slow_down(10)
         
-        // Initialize best move and score
-        let bestMove = -1;
-        let bestScore = this.maximizingPlayer ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+        // return best_move;
 
-        // Try each valid move and find the best move using minimax algorithm
-        for (const move of moves) {
-            const clonedBoard = this.board.clone(board);
-            this.board.move(clonedBoard, move, this.color);
-
-            const score = this.minimax(clonedBoard, 0, !this.maximizingPlayer);
-            
-            // Update best move if a better move is found
-            if ((this.maximizingPlayer && score > bestScore) || (!this.maximizingPlayer && score < bestScore)) {
-                bestScore = score;
-                bestMove = move;
-            }
-        }
-
-        console.log(this.color + ',' + bestMove);
-        return bestMove;
+        return this.minimax(board, 0, true);
     }
 
     minimax(board, depth, maximizingPlayer) {
-        const winner = this.board.winner(board, this.board.size);
+        let valid_moves = this.board.valid_moves(board)
+        let best_move = null;
+        let score;
 
-        if (depth === this.maxDepth || winner !== ' ') {
-            // If at max depth or game is over, evaluate the board
-            return this.evaluateBoard(board);
+        if (depth >= this.maxDepth || valid_moves.length <= 0) {
+            return this.score_position(board, this.color);
         }
 
-        const moves = this.board.valid_moves(board);
+        let scores = []
 
         if (maximizingPlayer) {
-            let maxEval = Number.NEGATIVE_INFINITY;
-
-            for (const move of moves) {
-                const clonedBoard = this.board.clone(board);
-                this.board.move(clonedBoard, move, this.color);
-
-                const eval1 = this.minimax(clonedBoard, depth + 1, false);
-                maxEval = Math.max(maxEval, eval1);
+            let best_score = -Infinity;
+            for(let col of valid_moves){
+                let temp_board = this.board.clone(board)
+                this.board.move(temp_board, col, this.color)
+                score = this.minimax(temp_board, depth + 1, false)
+                if (score > best_score) {
+                    best_score = score;
+                    best_move = col;
+                }
             }
+            return best_move;
 
-            return maxEval;
-        } else {
-            let minEval = Number.POSITIVE_INFINITY;
-
-            for (const move of moves) {
-                const clonedBoard = this.board.clone(board);
-                this.board.move(clonedBoard, move, this.opponentColor());
-
-                const eval1 = this.minimax(clonedBoard, depth + 1, true);
-                minEval = Math.min(minEval, eval1);
-            }
-
-            return minEval;
         }
+
+        let best_score = Infinity;
+        for(let col of valid_moves){
+            let temp_board = this.board.clone(board)
+            this.board.move(temp_board, col, this.opponent_color())
+            score = this.minimax(temp_board, depth + 1, true)
+            if (score < best_score) {
+                best_score = score;
+                best_move = col;
+            }
+        }
+
+        return best_move;
+
     }
 
-    evaluateBoard(board) {
-        const winner = this.board.winner(board, this.board.size);
-    
-        if (winner === this.color) {
-            // AI wins
-            return 1000;
-        } else if (winner === this.opponentColor()) {
-            // Opponent wins
-            return -1000;
-        }
-    
+    score_window(window, color) {
         let score = 0;
+
+        // 4 in a row
+        if (window.split(color).length - 1 >= 4) {
+            score += 100;
+        }
+        // 3 in a row
+        else if (window.split(color).length - 1 === 3 && window.split(' ').length - 1 === 1) {
+            score += 10;
+        }
+        // 2 in a row
+        else if (window.split(color).length - 1 === 2 && window.split(' ').length - 1 === 2) {
+            score += 5;
+        }
+
+        //opponent 3 in a row
+        if (window.split(this.opponent_color()).length - 1 === 3 && window.split(' ').length - 1 === 1) {
+            score -= 80;
+        }
+
+        return score;
+    }
+
+    score_position(board, color) {
+        let score = 0;
+
+        // Score Center Column
+        let center_array = [];
+        for (let row of board) {
+            center_array.push(row[Math.floor(board[0].length / 2)]);
+        }
+        let center_count = center_array.join('').split(color).length - 1;
+        score += center_count * 6;
+        
+        // Score Horizontal
+        for (let row of board) {
+            for (let c = 0; c < board[0].length - 3; c++) {
+                let rowArray = [];
+                for (let i = 0; i < 4; i++) {
+                    rowArray.push(row[c + i]);
+                }
     
-        // Evaluate based on piece count
-        const aiPieceCount = this.countPieces(board, this.color);
-        const opponentPieceCount = this.countPieces(board, this.opponentColor());
-        score += aiPieceCount - opponentPieceCount;
+                let window = rowArray.join('');
+                score += this.score_window(window, color);
+
+            }
+        }
+
+        // Score Vertical
+        for (let c = 0; c < board[0].length; c++) {
+            for (let r = 0; r < board.length - 3; r++) {
+                let colArray = [];
+                for (let i = 0; i < 4; i++) {
+                    colArray.push(board[r + i][c]);
+                }
     
-        // Evaluate based on center control
-        const centerControl = this.centerControl(board, this.color);
-        score += centerControl;
+                let window = colArray.join('');
+                score += this.score_window(window, color);
+            }
+        }
+
+        // Score Diagonals
+        for (let r = 0; r < board.length - 3; r++) {
+            for (let c = 0; c < board[0].length - 3; c++) {
+                let diagArray = [];
+                for (let i = 0; i < 4; i++) {
+                    diagArray.push(board[r + i][c + i]);
+                }
     
-        // Add other evaluation factors as needed
+                let window = diagArray.join('');
+                score += this.score_window(window, color);
+            }
+        }
+
+        for (let r = 0; r < board.length - 3; r++) {
+            for (let c = 0; c < board[0].length - 3; c++) {
+                let diagArray = [];
+                for (let i = 0; i < 4; i++) {
+                    diagArray.push(board[r + 3 - i][c + i]);
+                }
+    
+                let window = diagArray.join('');
+                score += this.score_window(window, color);
+            }
+        }
     
         return score;
     }
-    
-    countPieces(board, color) {
-        let count = 0;
-        for (let i = 0; i < this.board.size; i++) {
-            for (let j = 0; j < this.board.size; j++) {
-                if (board[i][j] === color) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-    
-    centerControl(board, color) {
-        const centerCols = Math.floor(this.board.size / 2);
-    
-        let control = 0;
-        for (let i = 0; i < this.board.size; i++) {
-            if (board[i][centerCols] === color) {
-                control++;
-            }
-        }
-    
-        return control;
-    }
 
-    opponentColor() {
+    opponent_color() {
         return this.color === 'W' ? 'B' : 'W';
     }
+
 }
 
 /*
@@ -350,7 +396,7 @@ class Environment extends MainClient{
                 x.winner = nid + ' ...Invalid move taken by ' + id + ' on column ' + action
             }else{
                 var winner = board.winner(x.rb, x.k)
-                console.log(winner)
+                // console.log(winner)
                 if(winner!= ' ') x.winner = winner
                 else{
                     var ellapsed = end - start
