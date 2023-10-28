@@ -192,7 +192,8 @@ class MinimaxPlayer extends Agent {
 
     negamax(board, depth, alpha, beta) {
         let valid_moves = this.board.valid_moves(board)
-        let best_move = null;
+        const moves = this.board.valid_moves(board)
+        let best_move = Math.floor(moves.length * Math.random());
         let score;
 
         if (depth >= this.maxDepth || this.isTerminalMode(board)) {
@@ -232,7 +233,8 @@ class MinimaxPlayer extends Agent {
 
     minimax(board, depth, alpha, beta, maximizingPlayer) {
         let valid_moves = this.board.valid_moves(board)
-        let best_move = null;
+        const moves = this.board.valid_moves(board)
+        let best_move = Math.floor(moves.length * Math.random());
         let score;
 
         if (depth >= this.maxDepth || this.isTerminalMode(board)) {
