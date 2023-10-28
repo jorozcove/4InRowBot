@@ -148,47 +148,104 @@ class RandomPlayer extends Agent{
 }
 
 class MinimaxPlayer extends Agent {
-    constructor(maxDepth) {
+    constructor(maxDepth=null) {
         super();
         this.board = new Board();
         this.maxDepth = maxDepth;
     }
 
     compute(board, time) {
-        // let valid_moves = this.board.valid_moves(board)
-        // let best_score = -Infinity;
-        // let best_move = null;
-        // let score;
+        if (!this.maxDepth){
+            let valid_moves = this.board.valid_moves(board)
+            let best_score = -Infinity;
+            let best_move = null;
+            let score;
 
-        // let scores = []
+            let scores = []
 
-        // for(let col of valid_moves){
-        //     let temp_board = this.board.clone(board)
-        //     this.board.move(temp_board, col, this.color)
-        //     score = this.score_position(temp_board, this.color)
-        //     scores.push(score)
-        //     if (score > best_score) {
-        //         best_score = score;
-        //         best_move = col;
-        //     }
-        // }
+            for(let col of valid_moves){
+                let temp_board = this.board.clone(board)
+                this.board.move(temp_board, col, this.color)
+                score = this.score_position(temp_board, this.color)
+                scores.push(score)
+                if (score > best_score) {
+                    best_score = score;
+                    best_move = col;
+                }
+            }
 
-        // console.log(this.color, best_move, scores)
+            console.log(this.color, best_move, scores)
 
-        // slow_down(10)
-        
-        // return best_move;
-
-        return this.minimax(board, 0, true);
+            slow_down(10)
+            
+            return best_move;
+        }
+        let value = this.minimax(board, 0, -Infinity, Infinity, true)[0];
+        // let value = this.negamax(board, 0, -Infinity, Infinity, this.color)[0];
+        console.log(this.color, value)
+        return value;
     }
 
-    minimax(board, depth, maximizingPlayer) {
+    isTerminalMode(board) {
+        return this.board.winner(board, board.k) !== ' ' || this.board.valid_moves(board).length <= 0;
+    }
+
+    negamax(board, depth, alpha, beta) {
         let valid_moves = this.board.valid_moves(board)
         let best_move = null;
         let score;
 
-        if (depth >= this.maxDepth || valid_moves.length <= 0) {
-            return this.score_position(board, this.color);
+        if (depth >= this.maxDepth || this.isTerminalMode(board)) {
+            if (this.isTerminalMode(board)) {
+                if (this.board.winner(board, board.k) === this.color) {
+                    return [null, Infinity];
+                } else if (this.board.winner(board, board.k) === this.opponent_color()) {
+                    return [null, -Infinity];
+                } else {
+                    return [null, 0];
+                }
+            }
+            return [null, this.score_position(board, this.color)];
+        }
+
+        let scores = []
+
+        let best_score = -Infinity;
+        for(let col of valid_moves){
+            let temp_board = this.board.clone(board)
+            this.board.move(temp_board, col, this.color)
+            score = -this.minimax(temp_board, depth + 1, -alpha, -beta)[1]
+            scores.push(score)
+            if (score > best_score) {
+                best_score = score;
+                best_move = col;
+            }
+            alpha = Math.max(alpha, score);
+            if (alpha >= beta) {
+                break;
+            }
+        }
+
+        return [best_move, best_score];
+
+    }
+
+    minimax(board, depth, alpha, beta, maximizingPlayer) {
+        let valid_moves = this.board.valid_moves(board)
+        let best_move = null;
+        let score;
+
+        if (depth >= this.maxDepth || this.isTerminalMode(board)) {
+            if (this.isTerminalMode(board)) {
+                if (this.board.winner(board, board.k) === this.color) {
+                    return [null, Infinity];
+                } else if (this.board.winner(board, board.k) === this.opponent_color()) {
+                    return [null, -Infinity];
+                } else {
+                    return [null, 0];
+                }
+            }
+            return [null, this.score_position(board, this.color)];
         }
 
         let scores = []
@@ -198,13 +255,17 @@ class MinimaxPlayer extends Agent {
             for(let col of valid_moves){
                 let temp_board = this.board.clone(board)
                 this.board.move(temp_board, col, this.color)
-                score = this.minimax(temp_board, depth + 1, false)
+                score = this.minimax(temp_board, depth + 1, alpha, beta, false)[1]
                 if (score > best_score) {
                     best_score = score;
                     best_move = col;
                 }
+                alpha = Math.max(alpha, score);
+                if (alpha >= beta) {
+                    break;
+                }
             }
-            return best_move;
+            return [best_move, best_score];
 
         }
 
@@ -212,14 +273,18 @@ class MinimaxPlayer extends Agent {
         for(let col of valid_moves){
             let temp_board = this.board.clone(board)
             this.board.move(temp_board, col, this.opponent_color())
-            score = this.minimax(temp_board, depth + 1, true)
+            score = this.minimax(temp_board, depth + 1, alpha, beta, true)[1]
             if (score < best_score) {
                 best_score = score;
                 best_move = col;
             }
+            beta = Math.min(beta, score);
+            if (alpha >= beta) {
+                break;
+            }
         }
 
-        return best_move;
+        return [best_move, best_score];
 
     }
 

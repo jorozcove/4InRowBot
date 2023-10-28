@@ -26,6 +26,7 @@ function KonektiMain(){
 	var client = new Environment()
     client.setPlayers({
         'r': new RandomPlayer(),
+		'm'  : new MinimaxPlayer(),
 		'm1' : new MinimaxPlayer(1),
 		'm2' : new MinimaxPlayer(2),
 		'm3' : new MinimaxPlayer(3),
