@@ -131,6 +131,9 @@ function slow_down(times){
  * Player's Code (Must inherit from Agent) 
  * This is an example of a random player agent
  */
+
+PREMOVES = []
+
 class RandomPlayer extends Agent{
     constructor(){ 
         super() 
@@ -139,13 +142,26 @@ class RandomPlayer extends Agent{
 
     compute(board, time){
         // console.log(board)
-        var moves = this.board.valid_moves(board)
-        var index = Math.floor(moves.length * Math.random())
-        // slow_down(2)
-        // console.log(this.color + ',' + moves[index])
-        return moves[index]
+
+        if(PREMOVES.length <= 0){
+
+            var moves = this.board.valid_moves(board)
+            var index = Math.floor(moves.length * Math.random())
+            slow_down(40)
+        
+
+            // console.log(this.color + ',' + moves[index])
+            return moves[index]
+        }
+
+        let move = PREMOVES.pop()
+        // slow_down(40)
+
+        return move
+
     }
 }
+
 
 class MinimaxPlayer extends Agent {
     constructor(maxDepth=null) {
@@ -155,7 +171,8 @@ class MinimaxPlayer extends Agent {
     }
 
     compute(board, time) {
-        if (!this.maxDepth){
+
+        if (!this.maxDepth) {
             let valid_moves = this.board.valid_moves(board)
             let best_score = -Infinity;
             let best_move = null;
@@ -174,16 +191,20 @@ class MinimaxPlayer extends Agent {
                 }
             }
 
-            // console.log(this.color, best_move, scores)
+            console.log(this.color, best_move, scores)
 
-            slow_down(10)
+            // slow_down(10)
+        
             
             return best_move;
         }
+        
         let value = this.minimax(board, 0, -Infinity, Infinity, true)[0];
+        console.log(this.color, value)
         // let value = this.negamax(board, 0, -Infinity, Infinity, this.color)[0];
         // console.log(this.color, value)
         console.log('Play', parseInt(Konekti.vc('k').value), 'in row')
+
         return value;
     }
 
@@ -233,18 +254,22 @@ class MinimaxPlayer extends Agent {
     }
 
     minimax(board, depth, alpha, beta, maximizingPlayer) {
-        let valid_moves = this.board.valid_moves(board)
-        const moves = this.board.valid_moves(board)
-        let best_move = Math.floor(moves.length * Math.random());
+        const valid_moves = this.board.valid_moves(board)
+        const is_terminal = this.isTerminalMode(board)
+
+        let best_move = Math.floor(valid_moves.length * Math.random());
         let score;
 
-        if (depth >= this.maxDepth || this.isTerminalMode(board)) {
-            if (this.isTerminalMode(board)) {
+        if (depth >= this.maxDepth || is_terminal) {
+            if (is_terminal) {
                 if (this.board.winner(board, board.k) === this.color) {
-                    return [null, Infinity];
+                    console.log('winner move', this.color)
+                    return [null, 1000000];
                 } else if (this.board.winner(board, board.k) === this.opponent_color()) {
-                    return [null, -Infinity];
+                    console.log('losing move', this.color)
+                    return [null, -1000000];
                 } else {
+                    console.log('tie move', this.color)
                     return [null, 0];
                 }
             }
@@ -263,7 +288,7 @@ class MinimaxPlayer extends Agent {
                     best_score = score;
                     best_move = col;
                 }
-                alpha = Math.max(alpha, score);
+                alpha = Math.max(alpha, best_score);
                 if (alpha >= beta) {
                     break;
                 }
@@ -281,7 +306,7 @@ class MinimaxPlayer extends Agent {
                 best_score = score;
                 best_move = col;
             }
-            beta = Math.min(beta, score);
+            beta = Math.min(beta, best_score);
             if (alpha >= beta) {
                 break;
             }
@@ -296,20 +321,30 @@ class MinimaxPlayer extends Agent {
 
         // 4 in a row
         if (window.split(color).length - 1 >= 4) {
-            score += 100;
+            score += 10000;
         }
         // 3 in a row
         else if (window.split(color).length - 1 === 3 && window.split(' ').length - 1 === 1) {
-            score += 10;
+            score += 15;
         }
         // 2 in a row
         else if (window.split(color).length - 1 === 2 && window.split(' ').length - 1 === 2) {
             score += 5;
         }
 
+        //opponent 2 in a row
+        if (window.split(this.opponent_color()).length - 1 === 2 && window.split(' ').length - 1 === 2) {
+            score -= 6;
+        }
+
         //opponent 3 in a row
         if (window.split(this.opponent_color()).length - 1 === 3 && window.split(' ').length - 1 === 1) {
-            score -= 80;
+            score -= 200;
+        }
+
+        //opponent 4 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 4) {
+            score -= 10000;
         }
 
         return score;

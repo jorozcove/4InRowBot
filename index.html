@@ -27,6 +27,7 @@ function KonektiMain(){
     client.setPlayers({
         'r': new RandomPlayer(),
 		'm'  : new MinimaxPlayer(),
+		'm_'  : new MinimaxPlayer(),
 		'm1' : new MinimaxPlayer(1),
 		'm2' : new MinimaxPlayer(2),
 		'm3' : new MinimaxPlayer(3),
@@ -52,7 +53,7 @@ function KonektiMain(){
 			'placeholder':"&#xf111; Black", 'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
         {'plugin':'raw', 'setup':["B_time", '&#xf252; Black', {'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
 			'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
-		{'plugin':'btn', 'setup':["play","fa-play", '', null, {'title':'Cara', 'class':'w3-right'}]}
+		{'plugin':'btn', 'setup':["play","fa-play", '', null, {'title':'Cara', 'class':'w3-right'}]},
 	]		
 	Konekti.navbar('navbar2', btn2, {'client':'client', 'method':'play'}, {'class':'w3-black w3-medium'}) 
    	// Connecting the canvas to the HTML component
