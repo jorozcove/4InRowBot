@@ -172,6 +172,8 @@ class MinimaxPlayer extends Agent {
 
     compute(board, time) {
 
+        this.board_k = parseInt(Konekti.vc('k').value)
+
         if (!this.maxDepth) {
             let valid_moves = this.board.valid_moves(board)
             let best_score = -Infinity;
@@ -209,7 +211,7 @@ class MinimaxPlayer extends Agent {
     }
 
     isTerminalMode(board) {
-        return this.board.winner(board, board.k) !== ' ' || this.board.valid_moves(board).length <= 0;
+        return this.board.winner(board, this.board_k) !== ' ' || this.board.valid_moves(board).length <= 0;
     }
 
     negamax(board, depth, alpha, beta) {
@@ -220,9 +222,9 @@ class MinimaxPlayer extends Agent {
 
         if (depth >= this.maxDepth || this.isTerminalMode(board)) {
             if (this.isTerminalMode(board)) {
-                if (this.board.winner(board, board.k) === this.color) {
+                if (this.board.winner(board, this.board_k) === this.color) {
                     return [null, Infinity];
-                } else if (this.board.winner(board, board.k) === this.opponent_color()) {
+                } else if (this.board.winner(board, this.board_k) === this.opponent_color()) {
                     return [null, -Infinity];
                 } else {
                     return [null, 0];
@@ -262,10 +264,10 @@ class MinimaxPlayer extends Agent {
 
         if (depth >= this.maxDepth || is_terminal) {
             if (is_terminal) {
-                if (this.board.winner(board, board.k) === this.color) {
+                if (this.board.winner(board, this.board_k) === this.color) {
                     console.log('winner move', this.color)
                     return [null, 1000000];
-                } else if (this.board.winner(board, board.k) === this.opponent_color()) {
+                } else if (this.board.winner(board, this.board_k) === this.opponent_color()) {
                     console.log('losing move', this.color)
                     return [null, -1000000];
                 } else {
@@ -363,9 +365,9 @@ class MinimaxPlayer extends Agent {
         
         // Score Horizontal
         for (let row of board) {
-            for (let c = 0; c < board[0].length - 3; c++) {
+            for (let c = 0; c < board[0].length - (this.board_k-1); c++) {
                 let rowArray = [];
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < this.board_k; i++) {
                     rowArray.push(row[c + i]);
                 }
     
@@ -377,9 +379,9 @@ class MinimaxPlayer extends Agent {
 
         // Score Vertical
         for (let c = 0; c < board[0].length; c++) {
-            for (let r = 0; r < board.length - 3; r++) {
+            for (let r = 0; r < board.length - (this.board_k-1); r++) {
                 let colArray = [];
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < this.board_k; i++) {
                     colArray.push(board[r + i][c]);
                 }
     
@@ -389,10 +391,10 @@ class MinimaxPlayer extends Agent {
         }
 
         // Score Diagonals
-        for (let r = 0; r < board.length - 3; r++) {
-            for (let c = 0; c < board[0].length - 3; c++) {
+        for (let r = 0; r < board.length - (this.board_k-1); r++) {
+            for (let c = 0; c < board[0].length - (this.board_k-1); c++) {
                 let diagArray = [];
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < this.board_k; i++) {
                     diagArray.push(board[r + i][c + i]);
                 }
     
@@ -401,11 +403,11 @@ class MinimaxPlayer extends Agent {
             }
         }
 
-        for (let r = 0; r < board.length - 3; r++) {
-            for (let c = 0; c < board[0].length - 3; c++) {
+        for (let r = 0; r < board.length - (this.board_k-1); r++) {
+            for (let c = 0; c < board[0].length - (this.board_k-1); c++) {
                 let diagArray = [];
-                for (let i = 0; i < 4; i++) {
-                    diagArray.push(board[r + 3 - i][c + i]);
+                for (let i = 0; i < this.board_k; i++) {
+                    diagArray.push(board[r + (this.board_k-1) - i][c + i]);
                 }
     
                 let window = diagArray.join('');
