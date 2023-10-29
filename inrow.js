@@ -174,7 +174,7 @@ class MinimaxPlayer extends Agent {
                 }
             }
 
-            console.log(this.color, best_move, scores)
+            // console.log(this.color, best_move, scores)
 
             slow_down(10)
             
@@ -182,7 +182,8 @@ class MinimaxPlayer extends Agent {
         }
         let value = this.minimax(board, 0, -Infinity, Infinity, true)[0];
         // let value = this.negamax(board, 0, -Infinity, Infinity, this.color)[0];
-        console.log(this.color, value)
+        // console.log(this.color, value)
+        console.log('Play', parseInt(Konekti.vc('k').value), 'in row')
         return value;
     }
 
