@@ -318,11 +318,10 @@ class MinimaxPlayer extends Agent {
 
     }
 
-    score_window(window, color) {
-        let score = 0;
-
+    score_4(window, color) {
+        let score = 0
         // 4 in a row
-        if (window.split(color).length - 1 >= 4) {
+        if (window.split(color).length - 1 === 4) {
             score += 10000;
         }
         // 3 in a row
@@ -347,6 +346,45 @@ class MinimaxPlayer extends Agent {
         //opponent 4 in a row
         if (window.split(this.opponent_color()).length - 1 >= 4) {
             score -= 10000;
+        }
+        return score
+    }
+
+    score_5(window, color) {
+        let score = this.score_4(window, color)
+        // 5 in a row
+        if (window.split(color).length - 1 >= 5) {
+            score += 100000;
+        }
+        //opponent 5 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 5) {
+            score -= 100000;
+        }
+        return score
+    }
+
+    score_6(window, color) {
+        let score = this.score_5(window, color)
+        // 6 in a row
+        if (window.split(color).length - 1 >= 6) {
+            score += 1000000;
+        }
+        //opponent 6 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 6) {
+            score -= 1000000;
+        }
+        return score
+    }
+
+    score_window(window, color) {
+        let score = 0;
+
+        if (window.length === 4) {
+            score += this.score_4(window, color)
+        } else if (window.length === 5) {
+            score += this.score_5(window, color)
+        } else if (window.length === 6) {
+            score += this.score_6(window, color)
         }
 
         return score;
@@ -421,6 +459,256 @@ class MinimaxPlayer extends Agent {
     opponent_color() {
         return this.color === 'W' ? 'B' : 'W';
     }
+
+}
+
+class CaosPlayer extends Agent {
+
+    constructor() {
+        super()
+        this.board = new Board()
+    }
+
+    choiceRandom(arr) {
+        return arr[(Math.floor(Math.random() * arr.length))];
+    }
+
+    getNextOpenRow(board, col) {
+        for (let r = 0; r < board.length; r++) {
+            console.log(r,col)
+            if (board[r][col] === ' ') {
+                console.log('entre')
+                return r;
+            }
+        }
+    }
+
+    dropPiece(board, row, col, piece) {        
+        board[row][col] = piece;
+    }
+
+    winningMove(board, piece) {
+        // Check horizontal locations for win
+        for (let c = 0; c < board.length - 3; c++) {
+            for (let r = 0; r < board.length; r++) {
+                if (
+                    board[r][c] == piece &&
+                    board[r][c + 1] == piece &&
+                    board[r][c + 2] == piece &&
+                    board[r][c + 3] == piece
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        // Check vertical locations for win
+        for (let c = 0; c < board.length; c++) {
+            for (let r = 0; r < board.length - 3; r++) {
+                if (
+                    board[r][c] == piece &&
+                    board[r + 1][c] == piece &&
+                    board[r + 2][c] == piece &&
+                    board[r + 3][c] == piece
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        // Check positively sloped diagonals
+        for (let c = 0; c < board.length - 3; c++) {
+            for (let r = 0; r < board.length - 3; r++) {
+                if (
+                    board[r][c] == piece &&
+                    board[r + 1][c + 1] == piece &&
+                    board[r + 2][c + 2] == piece &&
+                    board[r + 3][c + 3] == piece
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        // Check negatively sloped diagonals
+        for (let c = 0; c < board.length - 3; c++) {
+            for (let r = 3; r < board.length; r++) {
+                if (
+                    board[r][c] == piece &&
+                    board[r - 1][c + 1] == piece &&
+                    board[r - 2][c + 2] == piece &&
+                    board[r - 3][c + 3] == piece
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    evaluateWindow(window, piece) {
+        let score = 0;
+        const oppPiece = 'W' === piece ? 'B' : 'W';
+
+        if (window.filter(value => value === piece).length === 4) {
+            score += 100;
+        } else if (
+            window.filter(value => value === piece).length === 3 &&
+            window.filter(value => value === ' ').length === 1
+        ) {
+            score += 5;
+        } else if (
+            window.filter(value => value === piece).length === 2 &&
+            window.filter(value => value === ' ').length === 2
+        ) {
+            score += 2;
+        }
+
+        if (
+            window.filter(value => value === oppPiece).length === 3 &&
+            window.filter(value => value === ' ').length === 1
+        ) {
+            score -= 4;
+        }
+
+        return score;
+    }
+
+    scorePosition(board, piece) {
+        let score = 0;
+
+        // Score center column
+        const centerArray = Array.from(board.map(row => row[Math.floor(board - length / 2)]));
+        const centerCount = centerArray.filter(value => value === piece).length;
+        score += centerCount * 3;
+
+        // Score Horizontal
+        for (let r = 0; r < board.length; r++) {
+            const rowArray = Array.from(board[r]);
+            for (let c = 0; c < board - length - 3; c++) {
+                const window = rowArray.slice(c, c + 4);
+                score += this.evaluateWindow(window, piece);
+            }
+        }
+
+        // Score Vertical
+        for (let c = 0; c < board - length; c++) {
+            const colArray = Array.from(board.map(row => row[c]));
+            for (let r = 0; r < board.length - 3; r++) {
+                const window = colArray.slice(r, r + 4);
+                score += this.evaluateWindow(window, piece);
+            }
+        }
+
+        // Score positive sloped diagonal
+        for (let r = 0; r < board.length - 3; r++) {
+            for (let c = 0; c < board - length - 3; c++) {
+                const window = Array.from({ length: 4 }, (_, i) => board[r + i][c + i]);
+                score += this.evaluateWindow(window, piece);
+            }
+        }
+
+        for (let r = 0; r < board - length - 3; r++) {
+            for (let c = 0; c < board - length - 3; c++) {
+                const window = Array.from({ length: 4 }, (_, i) => board[r + 3 - i][c + i]);
+                score += this.evaluateWindow(window, piece);
+            }
+        }
+
+        return score;
+    }
+
+    isTerminalNode(board) {
+        return (
+            this.winningMove(board, 'B') ||
+            this.winningMove(board, 'W') ||
+            this.board.valid_moves(board).length === 0
+        );
+    }
+
+    minimax(board, depth, alpha, beta, maximizingPlayer, piece) {
+        const validLocations = this.board.valid_moves(board);
+        const isTerminal = this.isTerminalNode(board);
+        const oppPiece = 'W' === piece ? 'B' : 'W';
+
+
+        if (depth === 0 || isTerminal) {
+            if (isTerminal) {
+                if (this.winningMove(board, piece)) {
+                    return [null, 100000000000000];
+                } else if (this.winningMove(board, oppPiece)) {
+                    return [null, -10000000000000];
+                } else {
+                    // Game is over, no more valid moves
+                    return [null, 0];
+                }
+            } else {
+                // Depth is zero
+                return [null, this.scorePosition(board, piece)];
+            }
+        }
+
+        if (maximizingPlayer) {
+            let value = -Infinity;
+            let column = this.choiceRandom(validLocations);
+
+            for (const col of validLocations) {
+                /* const row = this.getNextOpenRow(board, col); */
+                
+                
+                const bCopy = board.slice(); // Deep copy
+                /* this.dropPiece(bCopy, row, col, piece); */
+                this.board.move(bCopy,col,piece)
+                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, false, oppPiece)[1];
+
+                if (newScore > value) {
+                    value = newScore;
+                    column = col;
+                }
+
+                alpha = Math.max(alpha, value);
+
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+
+            return [column, value];
+        } else {
+            let value = Infinity;
+            let column = this.choiceRandom(validLocations);
+
+            for (const col of validLocations) {
+                const row = this.getNextOpenRow(board, col);
+                const bCopy = board.slice(); // Deep copy
+                /* this.dropPiece(bCopy, row, col, oppPiece); */
+                this.board.move(bCopy,col,oppPiece)
+                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, true, piece)[1];
+
+                if (newScore < value) {
+                    value = newScore;
+                    column = col;
+                }
+
+                beta = Math.min(beta, value);
+
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+
+            return [column, value];
+        }
+    }
+
+    compute(board, time) {
+        for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction
+        for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction
+        console.table(board)
+        return this.minimax(board, 5, -Infinity, Infinity, true, this.color)[0]
+    }
+
 
 }
 

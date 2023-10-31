@@ -266,12 +266,11 @@ class MinimaxPlayer extends Agent {
 
     }
 
-    score_window(window, color) {
-        let score = 0;
-
+    score_4(window, color) {
+        let score = 0
         // 4 in a row
-        if (window.split(color).length - 1 >= 4) {
-            score += 10000;
+        if (window.split(color).length - 1 === 4) {
+            score += 10500;
         }
         // 3 in a row
         else if (window.split(color).length - 1 === 3 && window.split(' ').length - 1 === 1) {
@@ -289,12 +288,51 @@ class MinimaxPlayer extends Agent {
 
         //opponent 3 in a row
         if (window.split(this.opponent_color()).length - 1 === 3 && window.split(' ').length - 1 === 1) {
-            score -= 10000;
+            score -= 200;
         }
 
         //opponent 4 in a row
         if (window.split(this.opponent_color()).length - 1 >= 4) {
+            score -= 10000;
+        }
+        return score
+    }
+
+    score_5(window, color) {
+        let score = this.score_4(window, color)
+        // 5 in a row
+        if (window.split(color).length - 1 >= 5) {
+            score += 100000;
+        }
+        //opponent 5 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 5) {
             score -= 100000;
+        }
+        return score
+    }
+
+    score_6(window, color) {
+        let score = this.score_5(window, color)
+        // 6 in a row
+        if (window.split(color).length - 1 >= 6) {
+            score += 1000000;
+        }
+        //opponent 6 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 6) {
+            score -= 1000000;
+        }
+        return score
+    }
+
+    score_window(window, color) {
+        let score = 0;
+
+        if (window.length === 4) {
+            score += this.score_4(window, color)
+        } else if (window.length === 5) {
+            score += this.score_5(window, color)
+        } else if (window.length === 6) {
+            score += this.score_6(window, color)
         }
 
         return score;
@@ -374,7 +412,7 @@ class MinimaxPlayer extends Agent {
 
 
 const k = 4
-const size = 7
+const size = 7 
 
 // Put two agents to play
 function play_game(w_depth, b_depth){
