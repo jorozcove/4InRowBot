@@ -351,27 +351,96 @@ class MinimaxPlayer extends Agent {
     }
 
     score_5(window, color) {
-        let score = this.score_4(window, color)
+        let score = 0
         // 5 in a row
-        if (window.split(color).length - 1 >= 5) {
+        if (window.split(color).length - 1 === 5) {
             score += 100000;
         }
+
+        // 4 in a row
+        if (window.split(color).length - 1 === 4 && window.split(' ').length - 1 === 1) {
+            score += 15;
+        }
+        // 3 in a row
+        else if (window.split(color).length - 1 === 3 && window.split(' ').length - 1 === 1) {
+            score += 5;
+        }
+        // 2 in a row
+        else if (window.split(color).length - 1 === 2 && window.split(' ').length - 1 === 2) {
+            score += 2;
+        }
+
+        //opponent 2 in a row
+        if (window.split(this.opponent_color()).length - 1 === 2 && window.split(' ').length - 1 === 2) {
+            score -= 3;
+        }
+
+        //opponent 3 in a row
+        if (window.split(this.opponent_color()).length - 1 === 3 && window.split(' ').length - 1 === 1) {
+            score -= 20;
+        }
+
+        //opponent 4 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 4 && window.split(' ').length - 1 === 1) {
+            score -= 200;
+        }
+
         //opponent 5 in a row
         if (window.split(this.opponent_color()).length - 1 >= 5) {
             score -= 100000;
         }
+
         return score
     }
 
     score_6(window, color) {
-        let score = this.score_5(window, color)
+        let score = 0
         // 6 in a row
-        if (window.split(color).length - 1 >= 6) {
-            score += 1000000;
+        if (window.split(color).length - 1 === 6) {
+            score += 100000;
         }
+
+        // 5 in a row
+        if (window.split(color).length - 1 === 5 && window.split(' ').length - 1 === 1) {
+            score += 15;
+        }
+
+        // 4 in a row
+        if (window.split(color).length - 1 === 4 && window.split(' ').length - 1 === 1) {
+            score += 5;
+        }
+        // 3 in a row
+        else if (window.split(color).length - 1 === 3 && window.split(' ').length - 1 === 1) {
+            score += 2;
+        }
+        // 2 in a row
+        else if (window.split(color).length - 1 === 2 && window.split(' ').length - 1 === 2) {
+            score += 1;
+        }
+
+        //opponent 2 in a row
+        if (window.split(this.opponent_color()).length - 1 === 2 && window.split(' ').length - 1 === 2) {
+            score -= 2;
+        }
+
+        //opponent 3 in a row
+        if (window.split(this.opponent_color()).length - 1 === 3 && window.split(' ').length - 1 === 1) {
+            score -= 16;
+        }
+
+        //opponent 4 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 4 && window.split(' ').length - 1 === 1) {
+            score -= 25;
+        }
+
+        //opponent 5 in a row
+        if (window.split(this.opponent_color()).length - 1 >= 5 && window.split(' ').length - 1 === 1) {
+            score -= 200;
+        }
+
         //opponent 6 in a row
         if (window.split(this.opponent_color()).length - 1 >= 6) {
-            score -= 1000000;
+            score -= 100000;
         }
         return score
     }
@@ -464,28 +533,16 @@ class MinimaxPlayer extends Agent {
 
 class CaosPlayer extends Agent {
 
-    constructor() {
+    constructor(depth = 5) {
         super()
         this.board = new Board()
+        this.depth = depth
     }
 
     choiceRandom(arr) {
         return arr[(Math.floor(Math.random() * arr.length))];
     }
 
-    getNextOpenRow(board, col) {
-        for (let r = 0; r < board.length; r++) {
-            console.log(r,col)
-            if (board[r][col] === ' ') {
-                console.log('entre')
-                return r;
-            }
-        }
-    }
-
-    dropPiece(board, row, col, piece) {        
-        board[row][col] = piece;
-    }
 
     winningMove(board, piece) {
         // Check horizontal locations for win
@@ -586,14 +643,14 @@ class CaosPlayer extends Agent {
         // Score Horizontal
         for (let r = 0; r < board.length; r++) {
             const rowArray = Array.from(board[r]);
-            for (let c = 0; c < board - length - 3; c++) {
+            for (let c = 0; c < board.length - 3; c++) {
                 const window = rowArray.slice(c, c + 4);
                 score += this.evaluateWindow(window, piece);
             }
         }
 
         // Score Vertical
-        for (let c = 0; c < board - length; c++) {
+        for (let c = 0; c < board.length; c++) {
             const colArray = Array.from(board.map(row => row[c]));
             for (let r = 0; r < board.length - 3; r++) {
                 const window = colArray.slice(r, r + 4);
@@ -603,14 +660,14 @@ class CaosPlayer extends Agent {
 
         // Score positive sloped diagonal
         for (let r = 0; r < board.length - 3; r++) {
-            for (let c = 0; c < board - length - 3; c++) {
+            for (let c = 0; c < board.length - 3; c++) {
                 const window = Array.from({ length: 4 }, (_, i) => board[r + i][c + i]);
                 score += this.evaluateWindow(window, piece);
             }
         }
 
-        for (let r = 0; r < board - length - 3; r++) {
-            for (let c = 0; c < board - length - 3; c++) {
+        for (let r = 0; r < board.length - 3; r++) {
+            for (let c = 0; c < board.length - 3; c++) {
                 const window = Array.from({ length: 4 }, (_, i) => board[r + 3 - i][c + i]);
                 score += this.evaluateWindow(window, piece);
             }
@@ -627,15 +684,15 @@ class CaosPlayer extends Agent {
         );
     }
 
-    minimax(board, depth, alpha, beta, maximizingPlayer, piece) {
+    minimax(board, depth, alpha, beta, maximizingPlayer) {
         const validLocations = this.board.valid_moves(board);
         const isTerminal = this.isTerminalNode(board);
-        const oppPiece = 'W' === piece ? 'B' : 'W';
+        const oppPiece = 'W' === this.color ? 'B' : 'W';
 
 
         if (depth === 0 || isTerminal) {
             if (isTerminal) {
-                if (this.winningMove(board, piece)) {
+                if (this.winningMove(board, this.color)) {
                     return [null, 100000000000000];
                 } else if (this.winningMove(board, oppPiece)) {
                     return [null, -10000000000000];
@@ -645,7 +702,7 @@ class CaosPlayer extends Agent {
                 }
             } else {
                 // Depth is zero
-                return [null, this.scorePosition(board, piece)];
+                return [null, this.scorePosition(board, this.color)];
             }
         }
 
@@ -657,10 +714,10 @@ class CaosPlayer extends Agent {
                 /* const row = this.getNextOpenRow(board, col); */
                 
                 
-                const bCopy = board.slice(); // Deep copy
+                const bCopy = this.board.clone(board); // Deep copy
                 /* this.dropPiece(bCopy, row, col, piece); */
-                this.board.move(bCopy,col,piece)
-                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, false, oppPiece)[1];
+                this.board.move(bCopy,col,this.color)
+                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, false)[1];
 
                 if (newScore > value) {
                     value = newScore;
@@ -680,11 +737,11 @@ class CaosPlayer extends Agent {
             let column = this.choiceRandom(validLocations);
 
             for (const col of validLocations) {
-                const row = this.getNextOpenRow(board, col);
-                const bCopy = board.slice(); // Deep copy
+                
+                const bCopy = this.board.clone(board) // Deep copy
                 /* this.dropPiece(bCopy, row, col, oppPiece); */
                 this.board.move(bCopy,col,oppPiece)
-                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, true, piece)[1];
+                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, true)[1];
 
                 if (newScore < value) {
                     value = newScore;
@@ -703,10 +760,10 @@ class CaosPlayer extends Agent {
     }
 
     compute(board, time) {
-        for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction
-        for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction
+        /* for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction
+        for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction */
         console.table(board)
-        return this.minimax(board, 5, -Infinity, Infinity, true, this.color)[0]
+        return this.minimax(board, this.depth, -Infinity, Infinity, true)[0]
     }
 
 
