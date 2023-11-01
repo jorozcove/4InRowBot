@@ -26,14 +26,13 @@ function KonektiMain(){
 	var client = new Environment()
     client.setPlayers({
         'r': new RandomPlayer(),
-		'm'  : new MinimaxPlayer(),
-		'm_'  : new MinimaxPlayer(),
-		'm1' : new MinimaxPlayer(1),
+		'm'  : new MinimaxPlayer(1),
 		'm2' : new MinimaxPlayer(2),
-		'm3' : new MinimaxPlayer(3),
-		'm4' : new MinimaxPlayer(4),
+		'm2_': new MinimaxPlayer(2),
 		'm5' : new MinimaxPlayer(5),
-		'c': new CaosPlayer(),
+		'm5_': new MinimaxPlayer(5),
+		'm9' : new MinimaxPlayer(9),
+		'm9_': new MinimaxPlayer(9),
     })
 
 	Konekti.header('title','', 'Reversi', 3, {'class':'w3-black w3-center'} )

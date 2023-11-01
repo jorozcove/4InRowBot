@@ -147,7 +147,7 @@ class RandomPlayer extends Agent{
 
             var moves = this.board.valid_moves(board)
             var index = Math.floor(moves.length * Math.random())
-            slow_down(40)
+            // slow_down(40)
         
 
             // console.log(this.color + ',' + moves[index])
@@ -164,95 +164,47 @@ class RandomPlayer extends Agent{
 
 
 class MinimaxPlayer extends Agent {
-    constructor(maxDepth=null) {
+    constructor(depth) {
         super();
         this.board = new Board();
-        this.maxDepth = maxDepth;
+        this.maxDepth = depth;
+        this.transposition_table = {};
+    }
+
+    save_transposition(board, maximizingPlayer, score, col) {
+        this.transposition_table[[board, col, maximizingPlayer]] = score;
+    }
+
+    check_transposition(board, col, maximizingPlayer) {
+        return this.transposition_table[[board, col, maximizingPlayer]];
+    }
+
+    first_move(board) {
+        //check last row
+        for (let col of board[board.length - 1]) {
+            if (col !== ' ') {
+                return false;
+            }
+        }
+        return true;
     }
 
     compute(board, time) {
 
-        this.board_k = parseInt(Konekti.vc('k').value)
+        this.board_k = Konekti.vc('k').value
 
-        if (!this.maxDepth) {
-            let valid_moves = this.board.valid_moves(board)
-            let best_score = -Infinity;
-            let best_move = null;
-            let score;
-
-            let scores = []
-
-            for(let col of valid_moves){
-                let temp_board = this.board.clone(board)
-                this.board.move(temp_board, col, this.color)
-                score = this.score_position(temp_board, this.color)
-                scores.push(score)
-                if (score > best_score) {
-                    best_score = score;
-                    best_move = col;
-                }
-            }
-
-            console.log(this.color, best_move, scores)
-
-            // slow_down(10)
-        
-            
-            return best_move;
+        // make first move in the center
+        if (this.first_move(board)) {
+            return Math.floor(board[0].length / 2);
         }
         
         let value = this.minimax(board, 0, -Infinity, Infinity, true)[0];
-        console.log(this.color, value)
-        // let value = this.negamax(board, 0, -Infinity, Infinity, this.color)[0];
-        // console.log(this.color, value)
-        console.log('Play', parseInt(Konekti.vc('k').value), 'in row')
 
         return value;
     }
 
     isTerminalMode(board) {
         return this.board.winner(board, this.board_k) !== ' ' || this.board.valid_moves(board).length <= 0;
-    }
-
-    negamax(board, depth, alpha, beta) {
-        let valid_moves = this.board.valid_moves(board)
-        const moves = this.board.valid_moves(board)
-        let best_move = Math.floor(moves.length * Math.random());
-        let score;
-
-        if (depth >= this.maxDepth || this.isTerminalMode(board)) {
-            if (this.isTerminalMode(board)) {
-                if (this.board.winner(board, this.board_k) === this.color) {
-                    return [null, Infinity];
-                } else if (this.board.winner(board, this.board_k) === this.opponent_color()) {
-                    return [null, -Infinity];
-                } else {
-                    return [null, 0];
-                }
-            }
-            return [null, this.score_position(board, this.color)];
-        }
-
-        let scores = []
-
-        let best_score = -Infinity;
-        for(let col of valid_moves){
-            let temp_board = this.board.clone(board)
-            this.board.move(temp_board, col, this.color)
-            score = -this.minimax(temp_board, depth + 1, -alpha, -beta)[1]
-            scores.push(score)
-            if (score > best_score) {
-                best_score = score;
-                best_move = col;
-            }
-            alpha = Math.max(alpha, score);
-            if (alpha >= beta) {
-                break;
-            }
-        }
-
-        return [best_move, best_score];
-
     }
 
     minimax(board, depth, alpha, beta, maximizingPlayer) {
@@ -265,13 +217,13 @@ class MinimaxPlayer extends Agent {
         if (depth >= this.maxDepth || is_terminal) {
             if (is_terminal) {
                 if (this.board.winner(board, this.board_k) === this.color) {
-                    console.log('winner move', this.color)
+                    // console.log('winner move', this.color)
                     return [null, 1000000];
                 } else if (this.board.winner(board, this.board_k) === this.opponent_color()) {
-                    console.log('losing move', this.color)
+                    // console.log('losing move', this.color)
                     return [null, -1000000];
                 } else {
-                    console.log('tie move', this.color)
+                    // console.log('tie move', this.color)
                     return [null, 0];
                 }
             }
@@ -283,13 +235,22 @@ class MinimaxPlayer extends Agent {
         if (maximizingPlayer) {
             let best_score = -Infinity;
             for(let col of valid_moves){
+
                 let temp_board = this.board.clone(board)
                 this.board.move(temp_board, col, this.color)
-                score = this.minimax(temp_board, depth + 1, alpha, beta, false)[1]
+
+                score = this.check_transposition(temp_board,col,  maximizingPlayer)
+
+                if(!score){
+                    score = this.minimax(temp_board, depth + 1, alpha, beta, false)[1]
+                    this.save_transposition(temp_board, maximizingPlayer, score, col)
+                }
+
                 if (score > best_score) {
                     best_score = score;
                     best_move = col;
                 }
+
                 alpha = Math.max(alpha, best_score);
                 if (alpha >= beta) {
                     break;
@@ -301,9 +262,17 @@ class MinimaxPlayer extends Agent {
 
         let best_score = Infinity;
         for(let col of valid_moves){
+
             let temp_board = this.board.clone(board)
             this.board.move(temp_board, col, this.opponent_color())
-            score = this.minimax(temp_board, depth + 1, alpha, beta, true)[1]
+
+            score = this.check_transposition(temp_board, col, maximizingPlayer)
+
+            if(!score){
+                score = this.minimax(temp_board, depth + 1, alpha, beta, true)[1]
+                this.save_transposition(temp_board, maximizingPlayer, score, col)
+            }
+
             if (score < best_score) {
                 best_score = score;
                 best_move = col;
@@ -531,243 +500,6 @@ class MinimaxPlayer extends Agent {
 
 }
 
-class CaosPlayer extends Agent {
-
-    constructor(depth = 5) {
-        super()
-        this.board = new Board()
-        this.depth = depth
-    }
-
-    choiceRandom(arr) {
-        return arr[(Math.floor(Math.random() * arr.length))];
-    }
-
-
-    winningMove(board, piece) {
-        // Check horizontal locations for win
-        for (let c = 0; c < board.length - 3; c++) {
-            for (let r = 0; r < board.length; r++) {
-                if (
-                    board[r][c] == piece &&
-                    board[r][c + 1] == piece &&
-                    board[r][c + 2] == piece &&
-                    board[r][c + 3] == piece
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        // Check vertical locations for win
-        for (let c = 0; c < board.length; c++) {
-            for (let r = 0; r < board.length - 3; r++) {
-                if (
-                    board[r][c] == piece &&
-                    board[r + 1][c] == piece &&
-                    board[r + 2][c] == piece &&
-                    board[r + 3][c] == piece
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        // Check positively sloped diagonals
-        for (let c = 0; c < board.length - 3; c++) {
-            for (let r = 0; r < board.length - 3; r++) {
-                if (
-                    board[r][c] == piece &&
-                    board[r + 1][c + 1] == piece &&
-                    board[r + 2][c + 2] == piece &&
-                    board[r + 3][c + 3] == piece
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        // Check negatively sloped diagonals
-        for (let c = 0; c < board.length - 3; c++) {
-            for (let r = 3; r < board.length; r++) {
-                if (
-                    board[r][c] == piece &&
-                    board[r - 1][c + 1] == piece &&
-                    board[r - 2][c + 2] == piece &&
-                    board[r - 3][c + 3] == piece
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    evaluateWindow(window, piece) {
-        let score = 0;
-        const oppPiece = 'W' === piece ? 'B' : 'W';
-
-        if (window.filter(value => value === piece).length === 4) {
-            score += 100;
-        } else if (
-            window.filter(value => value === piece).length === 3 &&
-            window.filter(value => value === ' ').length === 1
-        ) {
-            score += 5;
-        } else if (
-            window.filter(value => value === piece).length === 2 &&
-            window.filter(value => value === ' ').length === 2
-        ) {
-            score += 2;
-        }
-
-        if (
-            window.filter(value => value === oppPiece).length === 3 &&
-            window.filter(value => value === ' ').length === 1
-        ) {
-            score -= 4;
-        }
-
-        return score;
-    }
-
-    scorePosition(board, piece) {
-        let score = 0;
-
-        // Score center column
-        const centerArray = Array.from(board.map(row => row[Math.floor(board - length / 2)]));
-        const centerCount = centerArray.filter(value => value === piece).length;
-        score += centerCount * 3;
-
-        // Score Horizontal
-        for (let r = 0; r < board.length; r++) {
-            const rowArray = Array.from(board[r]);
-            for (let c = 0; c < board.length - 3; c++) {
-                const window = rowArray.slice(c, c + 4);
-                score += this.evaluateWindow(window, piece);
-            }
-        }
-
-        // Score Vertical
-        for (let c = 0; c < board.length; c++) {
-            const colArray = Array.from(board.map(row => row[c]));
-            for (let r = 0; r < board.length - 3; r++) {
-                const window = colArray.slice(r, r + 4);
-                score += this.evaluateWindow(window, piece);
-            }
-        }
-
-        // Score positive sloped diagonal
-        for (let r = 0; r < board.length - 3; r++) {
-            for (let c = 0; c < board.length - 3; c++) {
-                const window = Array.from({ length: 4 }, (_, i) => board[r + i][c + i]);
-                score += this.evaluateWindow(window, piece);
-            }
-        }
-
-        for (let r = 0; r < board.length - 3; r++) {
-            for (let c = 0; c < board.length - 3; c++) {
-                const window = Array.from({ length: 4 }, (_, i) => board[r + 3 - i][c + i]);
-                score += this.evaluateWindow(window, piece);
-            }
-        }
-
-        return score;
-    }
-
-    isTerminalNode(board) {
-        return (
-            this.winningMove(board, 'B') ||
-            this.winningMove(board, 'W') ||
-            this.board.valid_moves(board).length === 0
-        );
-    }
-
-    minimax(board, depth, alpha, beta, maximizingPlayer) {
-        const validLocations = this.board.valid_moves(board);
-        const isTerminal = this.isTerminalNode(board);
-        const oppPiece = 'W' === this.color ? 'B' : 'W';
-
-
-        if (depth === 0 || isTerminal) {
-            if (isTerminal) {
-                if (this.winningMove(board, this.color)) {
-                    return [null, 100000000000000];
-                } else if (this.winningMove(board, oppPiece)) {
-                    return [null, -10000000000000];
-                } else {
-                    // Game is over, no more valid moves
-                    return [null, 0];
-                }
-            } else {
-                // Depth is zero
-                return [null, this.scorePosition(board, this.color)];
-            }
-        }
-
-        if (maximizingPlayer) {
-            let value = -Infinity;
-            let column = this.choiceRandom(validLocations);
-
-            for (const col of validLocations) {
-                /* const row = this.getNextOpenRow(board, col); */
-                
-                
-                const bCopy = this.board.clone(board); // Deep copy
-                /* this.dropPiece(bCopy, row, col, piece); */
-                this.board.move(bCopy,col,this.color)
-                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, false)[1];
-
-                if (newScore > value) {
-                    value = newScore;
-                    column = col;
-                }
-
-                alpha = Math.max(alpha, value);
-
-                if (alpha >= beta) {
-                    break;
-                }
-            }
-
-            return [column, value];
-        } else {
-            let value = Infinity;
-            let column = this.choiceRandom(validLocations);
-
-            for (const col of validLocations) {
-                
-                const bCopy = this.board.clone(board) // Deep copy
-                /* this.dropPiece(bCopy, row, col, oppPiece); */
-                this.board.move(bCopy,col,oppPiece)
-                const newScore = this.minimax(bCopy, depth - 1, alpha, beta, true)[1];
-
-                if (newScore < value) {
-                    value = newScore;
-                    column = col;
-                }
-
-                beta = Math.min(beta, value);
-
-                if (alpha >= beta) {
-                    break;
-                }
-            }
-
-            return [column, value];
-        }
-    }
-
-    compute(board, time) {
-        /* for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction
-        for (var i = 0; i < 50000000; i++) { } // Making it very slow to test time restriction */
-        console.table(board)
-        return this.minimax(board, this.depth, -Infinity, Infinity, true)[0]
-    }
-
-
-}
 
 /*
  * Environment (Cannot be modified or any of its attributes accesed directly)
